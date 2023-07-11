@@ -1685,3 +1685,30 @@ def get_seearch_items_conditions(item_code, serial_no, batch_no, barcode):
     return """ and (name like {item_code} or item_name like {item_code})""".format(
         item_code=frappe.db.escape("%" + item_code + "%")
     )
+
+
+@frappe.whitelist()
+def serial_no_validation(company):
+    sales=0
+    company_type=frappe.get_value("Company",company,"company_type")
+    if company_type:
+        sales=frappe.get_value("Company Type",company_type,"sales")
+    print(sales)
+    return sales
+
+
+
+
+#     let without_serial=0;
+#        frappe.call({
+#         method: 'posawesome.posawesome.api.posapp.serial_no_validation',
+#         args: {
+#           company: this.pos_profile.company,
+#         },
+        
+#         callback: function (r) {
+#           if (r.message) {
+#             without_serial=r.message
+#           }
+#         },
+#       });

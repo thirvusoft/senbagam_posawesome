@@ -1271,16 +1271,40 @@ export default {
         });
         return;
       }
-      if (!this.validate()) {
-        return;
-      }
-      evntBus.$emit('show_payment', 'true');
-      const invoice_doc = this.proces_invoice();
-      evntBus.$emit('send_invoice_doc_payment', invoice_doc);
+      this.serial_no_validation()
+     
     },
-
-    validate() {
+    serial_no_validation(){
+      var me=this;
+      frappe.call({
+        method: 'posawesome.posawesome.api.posapp.serial_no_validation',
+        args: {
+        company: this.pos_profile.company,
+      },
+        callback:function (r) {
+        
+          if (r.message) {
+                 
+              if (me.validate(r.message)){
+                evntBus.$emit('show_payment', 'true');
+                const invoice_doc = me.proces_invoice();
+                evntBus.$emit('send_invoice_doc_payment', invoice_doc);
+              }
+          }
+          else{
+            evntBus.$emit('show_payment', 'true');
+                const invoice_doc = me.proces_invoice();
+                evntBus.$emit('send_invoice_doc_payment', invoice_doc);
+          }
+          
+      }
+      
+    });
+    },
+     validate(without_serial) {
+     
       let value = true;
+      
       this.items.forEach((item) => {
         if (this.stock_settings.allow_negative_stock != 1) {
           if (
@@ -1296,6 +1320,7 @@ export default {
               color: 'error',
             });
             value = false;
+            return value
           }
         }
         if (item.qty == 0) {
@@ -1306,6 +1331,7 @@ export default {
             color: 'error',
           });
           value = false;
+          return value
         }
         if (
           item.max_discount > 0 &&
@@ -1319,8 +1345,9 @@ export default {
             color: 'error',
           });
           value = false;
+          return value
         }
-        if (item.has_serial_no) {
+        if (item.has_serial_no && without_serial==1) {
           if (
             !this.invoice_doc.is_return &&
             (!item.serial_no_selected ||
@@ -1333,9 +1360,10 @@ export default {
               color: 'error',
             });
             value = false;
+            return value
           }
         }
-        if (item.has_batch_no) {
+        if (item.has_batch_no&& without_serial==1) {
           if (item.stock_qty > item.actual_batch_qty) {
             evntBus.$emit('show_mesage', {
               text: __(
@@ -1357,6 +1385,7 @@ export default {
               color: 'error',
             });
             value = false;
+            return value
           }
         }
         if (this.invoice_doc.is_return) {
