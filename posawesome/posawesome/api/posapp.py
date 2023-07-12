@@ -610,12 +610,14 @@ def submit_invoice(invoice, data):
 
 
 def set_batch_nos_for_bundels(doc, warehouse_field, throw=False):
+  
     """Automatically select `batch_no` for outgoing items in item table"""
     for d in doc.packed_items:
         qty = d.get("stock_qty") or d.get("transfer_qty") or d.get("qty") or 0
         has_batch_no = frappe.db.get_value("Item", d.item_code, "has_batch_no")
         warehouse = d.get(warehouse_field, None)
         if has_batch_no and warehouse and qty > 0:
+            print(d.batch_no)
             if not d.batch_no:
                 d.batch_no = get_batch_no(
                     d.item_code, warehouse, qty, throw, d.serial_no
@@ -915,9 +917,12 @@ def get_item_detail(item, doc=None, warehouse=None, price_list=None):
     item = json.loads(item)
     item_code = item.get("item_code")
     if warehouse and item.get("has_batch_no") and not item.get("batch_no"):
+        print("ite")
+        print(item.get("serial_no"))
         item["batch_no"] = get_batch_no(
-            item_code, warehouse, item.get("qty"), False, item.get("d")
+            item_code, warehouse, item.get("qty"), False, item.get("serial_no")
         )
+        
     item["selling_price_list"] = price_list
     max_discount = frappe.get_value("Item", item_code, "max_discount")
     res = get_item_details(
@@ -928,6 +933,7 @@ def get_item_detail(item, doc=None, warehouse=None, price_list=None):
     if item.get("is_stock_item") and warehouse:
         res["actual_qty"] = get_stock_availability(item_code, warehouse)
     res["max_discount"] = max_discount
+   
     return res
 
 

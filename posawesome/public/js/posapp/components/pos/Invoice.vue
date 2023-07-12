@@ -1274,6 +1274,7 @@ export default {
       this.serial_no_validation()
      
     },
+    // Thirvu customization start
     serial_no_validation(){
       var me=this;
       frappe.call({
@@ -1300,6 +1301,7 @@ export default {
       }
       
     });
+    //end
     },
      validate(without_serial) {
      
@@ -1347,6 +1349,7 @@ export default {
           value = false;
           return value
         }
+        //THirvu customizations start
         if (item.has_serial_no && without_serial==1) {
           if (
             !this.invoice_doc.is_return &&
@@ -1375,6 +1378,7 @@ export default {
             value = false;
           }
         }
+        // end
         if (this.pos_profile.posa_allow_user_to_edit_additional_discount) {
           const clac_percentage = (this.discount_amount / this.Total) * 100;
           if (clac_percentage > this.pos_profile.posa_max_discount_allowed) {
@@ -1496,6 +1500,7 @@ export default {
 
     update_item_detail(item) {
       const vm = this;
+      console.log(item.serial_no_selected)
       frappe.call({
         method: 'posawesome.posawesome.api.posapp.get_item_detail',
         args: {
@@ -1522,12 +1527,13 @@ export default {
             update_stock: this.pos_profile.update_stock,
             price_list: this.get_price_list(),
             has_batch_no: item.has_batch_no,
-            serial_no: item.serial_no,
+            serial_no: item.serial_no_selected[0],
             batch_no: item.batch_no,
             is_stock_item: item.is_stock_item,
           },
         },
         callback: function (r) {
+          console.log(r.message)
           if (r.message) {
             const data = r.message;
             if (
