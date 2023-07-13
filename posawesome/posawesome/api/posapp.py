@@ -445,6 +445,8 @@ def get_sales_person_names():
 
 @frappe.whitelist()
 def update_invoice(data):
+    print("sales invoice")
+    print(data)
     data = json.loads(data)
     if data.get("name"):
         invoice_doc = frappe.get_doc("Sales Invoice", data.get("name"))
@@ -871,6 +873,7 @@ def get_items_details(pos_profile, items_data):
                 batch_no_data = []
 
                 batch_list = get_batch_qty(warehouse=warehouse, item_code=item_code)
+                print(batch_list)
 
                 if batch_list:
                     for batch in batch_list:
@@ -917,8 +920,6 @@ def get_item_detail(item, doc=None, warehouse=None, price_list=None):
     item = json.loads(item)
     item_code = item.get("item_code")
     if warehouse and item.get("has_batch_no") and not item.get("batch_no"):
-        print("ite")
-        print(item.get("serial_no"))
         item["batch_no"] = get_batch_no(
             item_code, warehouse, item.get("qty"), False, item.get("serial_no")
         )
@@ -933,6 +934,11 @@ def get_item_detail(item, doc=None, warehouse=None, price_list=None):
     if item.get("is_stock_item") and warehouse:
         res["actual_qty"] = get_stock_availability(item_code, warehouse)
     res["max_discount"] = max_discount
+    company=frappe.get_value("Warehouse",warehouse,"company")
+    company_type=frappe.get_value("Company Type",company,"sales")
+    if company_type==0:
+        res["batch_no"]=""
+        res["serial_no"]=""
    
     return res
 
@@ -1660,6 +1666,8 @@ def auto_create_items():
 
 @frappe.whitelist()
 def search_serial_or_batch_or_barcode_number(search_value, search_serial_no):
+    print("serial_no")
+    print(search_serial_no)
     # search barcode no
     barcode_data = frappe.db.get_value(
         "Item Barcode",
@@ -1699,22 +1707,8 @@ def serial_no_validation(company):
     company_type=frappe.get_value("Company",company,"company_type")
     if company_type:
         sales=frappe.get_value("Company Type",company_type,"sales")
-    print(sales)
     return sales
 
 
 
 
-#     let without_serial=0;
-#        frappe.call({
-#         method: 'posawesome.posawesome.api.posapp.serial_no_validation',
-#         args: {
-#           company: this.pos_profile.company,
-#         },
-        
-#         callback: function (r) {
-#           if (r.message) {
-#             without_serial=r.message
-#           }
-#         },
-#       });

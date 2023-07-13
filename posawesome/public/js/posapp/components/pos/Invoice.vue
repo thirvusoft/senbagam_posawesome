@@ -473,7 +473,7 @@
                     cols="12"
                     v-if="item.has_serial_no == 1 || item.serial_no"
                   >
-                    <v-autocomplete
+                  <v-autocomplete
                       v-model="item.serial_no_selected"
                       :items="item.serial_no_data"
                       item-text="serial_no"
@@ -484,6 +484,7 @@
                       small-chips
                       :label="frappe._('Serial No')"
                       multiple
+                      disabled
                       @change="set_serial_no(item)"
                     ></v-autocomplete>
                   </v-col>
@@ -1190,6 +1191,8 @@ export default {
     get_invoice_items() {
       const items_list = [];
       this.items.forEach((item) => {
+        console.log("tyywueywueyr")
+        console.log(item.serial_no)
         const new_item = {
           item_code: item.item_code,
           posa_row_id: item.posa_row_id,
@@ -1232,6 +1235,7 @@ export default {
 
     update_invoice(doc) {
       const vm = this;
+      console.log(doc)
       frappe.call({
         method: 'posawesome.posawesome.api.posapp.update_invoice',
         args: {
@@ -1239,6 +1243,7 @@ export default {
         },
         async: false,
         callback: function (r) {
+          console.log(doc)
           if (r.message) {
             vm.invoice_doc = r.message;
           }
