@@ -1190,6 +1190,22 @@ export default {
 
     get_invoice_items() {
       const items_list = [];
+      const company_type = frappe.call({
+			method: 'posawesome.posawesome.api.posapp.serial_no_validation',
+			args: {
+				company:this.pos_profile.company
+			},
+		});
+    company_type.then(r => {
+      if(r.message==1){
+              item.serial_no=item.serial_no_selected[0]
+             
+            }
+      else{
+        item.serial_no=item.serial_no
+
+      }
+    })
       this.items.forEach((item) => {
         console.log("tyywueywueyr")
         console.log(item.serial_no)
@@ -1505,6 +1521,22 @@ export default {
 
     update_item_detail(item) {
       const vm = this;
+      const company_type = frappe.call({
+			method: 'posawesome.posawesome.api.posapp.serial_no_validation',
+			args: {
+				company:this.pos_profile.company
+			},
+		});
+    company_type.then(r => {
+      if(r.message==1){
+              item.serial_no=item.serial_no_selected[0]
+             
+            }
+      else{
+        item.serial_no=item.serial_no
+
+      }
+    })
       console.log(item.serial_no_selected)
       frappe.call({
         method: 'posawesome.posawesome.api.posapp.get_item_detail',
@@ -1532,7 +1564,7 @@ export default {
             update_stock: this.pos_profile.update_stock,
             price_list: this.get_price_list(),
             has_batch_no: item.has_batch_no,
-            serial_no: item.serial_no_selected[0],
+            serial_no: item.serial_no,
             batch_no: item.batch_no,
             is_stock_item: item.is_stock_item,
           },

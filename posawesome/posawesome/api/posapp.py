@@ -935,11 +935,15 @@ def get_item_detail(item, doc=None, warehouse=None, price_list=None):
         res["actual_qty"] = get_stock_availability(item_code, warehouse)
     res["max_discount"] = max_discount
     company=frappe.get_value("Warehouse",warehouse,"company")
-    company_type=frappe.get_value("Company Type",company,"sales")
-    if company_type==0:
+    company_type=frappe.get_value("Company",company,"company_type")
+    type_value=frappe.get_value("Company Type",company_type,"sales")
+    if type_value==0:
         res["batch_no"]=""
         res["serial_no"]=""
-   
+    print("ppppp")
+    print(type_value)
+    print(res)
+    print("ppppp")
     return res
 
 
@@ -1707,6 +1711,8 @@ def serial_no_validation(company):
     company_type=frappe.get_value("Company",company,"company_type")
     if company_type:
         sales=frappe.get_value("Company Type",company_type,"sales")
+    print("sales_value")
+    print(sales)
     return sales
 
 
