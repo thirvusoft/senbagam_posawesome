@@ -494,6 +494,8 @@ def update_invoice(data):
                 tax.included_in_print_rate = 1
 
     invoice_doc.save()
+    print("fggjsjhjfhjdh")
+    print(invoice_doc)
     return invoice_doc
 
 
@@ -918,12 +920,14 @@ def get_items_details(pos_profile, items_data):
 @frappe.whitelist()
 def get_item_detail(item, doc=None, warehouse=None, price_list=None):
     item = json.loads(item)
+    print(item)
     item_code = item.get("item_code")
     if warehouse and item.get("has_batch_no") and not item.get("batch_no"):
         item["batch_no"] = get_batch_no(
             item_code, warehouse, item.get("qty"), False, item.get("serial_no")
         )
-        
+        print("uuuuuuuuuuuuuuuuuuuuu")
+        print(item.get("serial_no"))
     item["selling_price_list"] = price_list
     max_discount = frappe.get_value("Item", item_code, "max_discount")
     res = get_item_details(
@@ -934,16 +938,14 @@ def get_item_detail(item, doc=None, warehouse=None, price_list=None):
     if item.get("is_stock_item") and warehouse:
         res["actual_qty"] = get_stock_availability(item_code, warehouse)
     res["max_discount"] = max_discount
+    res["batch_no"]=item["batch_no"]
     company=frappe.get_value("Warehouse",warehouse,"company")
     company_type=frappe.get_value("Company",company,"company_type")
     type_value=frappe.get_value("Company Type",company_type,"sales")
     if type_value==0:
         res["batch_no"]=""
         res["serial_no"]=""
-    print("ppppp")
-    print(type_value)
-    print(res)
-    print("ppppp")
+    
     return res
 
 

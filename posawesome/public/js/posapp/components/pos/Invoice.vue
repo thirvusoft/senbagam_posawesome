@@ -188,6 +188,16 @@
                 disabled
               ></v-simple-checkbox>
             </template>
+          
+            <template v-slot:item.is_shield="{ item }">
+            <v-simple-checkbox
+              v-model="item.is_shield"
+             
+              :disabled="!invoice_doc.is_return"
+             
+            ></v-simple-checkbox>
+            </template>
+
 
             <template v-slot:expanded-item="{ headers, item }">
               <td :colspan="headers.length" class="ma-0 pa-0">
@@ -213,6 +223,7 @@
                       <v-icon>mdi-minus-circle-outline</v-icon>
                     </v-btn>
                   </v-col>
+                  
                   <v-col cols="1">
                     <v-btn
                       :disabled="!!item.posa_is_offer || !!item.posa_is_replace"
@@ -867,6 +878,7 @@ export default {
         { text: __('Rate'), value: 'rate', align: 'center' },
         { text: __('Amount'), value: 'amount', align: 'center' },
         { text: __('is Offer'), value: 'posa_is_offer', align: 'center' },
+        { text: __('is Sheild'), value: 'is_shield', align: 'center' },
       ],
     };
   },
@@ -1025,12 +1037,16 @@ export default {
       if (!item.qty) {
         item.qty = 1;
       }
+      if (!item.posa_is_offer1) {
+        item.posa_is_offer = 0;
+      }
       if (!item.posa_is_offer) {
         item.posa_is_offer = 0;
       }
       if (!item.posa_is_replace) {
         item.posa_is_replace = '';
       }
+     
       new_item.stock_qty = item.qty;
       new_item.discount_amount = 0;
       new_item.discount_percentage = 0;
@@ -1156,12 +1172,17 @@ export default {
     },
 
     get_invoice_doc() {
+      console.log(this.is_shield)
+      // if(item.is_shield==true){
+      //   item.is_shield=1;
+      // }
       let doc = {};
       if (this.invoice_doc.name) {
         doc = { ...this.invoice_doc };
       }
       doc.doctype = 'Sales Invoice';
       doc.is_pos = 1;
+      doc.is_shield=item.is_shield;
       doc.ignore_pricing_rule = 1;
       doc.company = doc.company || this.pos_profile.company;
       doc.pos_profile = doc.pos_profile || this.pos_profile.name;
@@ -1208,7 +1229,8 @@ export default {
     })
       this.items.forEach((item) => {
         console.log("tyywueywueyr")
-        console.log(item.serial_no)
+        console.log(item.is_shield)
+        
         const new_item = {
           item_code: item.item_code,
           posa_row_id: item.posa_row_id,
@@ -1217,6 +1239,7 @@ export default {
           posa_is_offer: item.posa_is_offer,
           posa_is_replace: item.posa_is_replace,
           is_free_item: item.is_free_item,
+          is_shield:item.is_shield,
           qty: flt(item.qty),
           rate: flt(item.rate),
           uom: item.uom,
@@ -1251,7 +1274,8 @@ export default {
 
     update_invoice(doc) {
       const vm = this;
-      console.log(doc)
+      console.log("12346")
+      console.log()
       frappe.call({
         method: 'posawesome.posawesome.api.posapp.update_invoice',
         args: {
@@ -1278,6 +1302,7 @@ export default {
     },
 
     show_payment() {
+     
       if (!this.customer) {
         evntBus.$emit('show_mesage', {
           text: __(`There is no Customer !`),
@@ -1292,6 +1317,7 @@ export default {
         });
         return;
       }
+    
       this.serial_no_validation()
      
     },
@@ -1387,6 +1413,18 @@ export default {
             return value
           }
         }
+        const vm = this;
+        console.log(item.posa_notes)
+        console.log("jjjjjjjjjjjkkkkkkkkkkkkkkkkkkkkkkkaaaaaaaaaaaaaaaaaaaaa")
+        if (!item.posa_notes &&this.invoice_doc.is_return) {
+          
+        evntBus.$emit('show_mesage', {
+          text: __(`There is no Reason Enter`),
+          color: 'error',
+        });
+        value = false;
+        // return value
+      }
         if (item.has_batch_no&& without_serial==1) {
           if (item.stock_qty > item.actual_batch_qty) {
             evntBus.$emit('show_mesage', {
@@ -1399,6 +1437,8 @@ export default {
             value = false;
           }
         }
+     
+    
         // end
         if (this.pos_profile.posa_allow_user_to_edit_additional_discount) {
           const clac_percentage = (this.discount_amount / this.Total) * 100;
@@ -1536,8 +1576,8 @@ export default {
         item.serial_no=item.serial_no
 
       }
-    })
-      console.log(item.serial_no_selected)
+      console.log("hjsfjshfddkfhgkdfh")
+      console.log(item.serial_no)
       frappe.call({
         method: 'posawesome.posawesome.api.posapp.get_item_detail',
         args: {
@@ -1625,7 +1665,9 @@ export default {
           }
         },
       });
-    },
+  
+    })
+  },
 
     fetch_customer_details() {
       const vm = this;
@@ -2672,6 +2714,7 @@ export default {
       });
     });
     evntBus.$on('load_return_invoice', (data) => {
+      
       this.new_invoice(data.invoice_doc);
       this.discount_amount = -data.return_doc.discount_amount;
       this.additional_discount_percentage =
@@ -2680,6 +2723,7 @@ export default {
     });
     evntBus.$on('set_new_line', (data) => {
       this.new_line = data;
+     
     });
     document.addEventListener('keydown', this.shortOpenPayment.bind(this));
     document.addEventListener('keydown', this.shortDeleteFirstItem.bind(this));
