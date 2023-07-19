@@ -189,9 +189,9 @@
               ></v-simple-checkbox>
             </template>
           
-            <template v-slot:item.is_shield="{ item }">
+            <template v-slot:item.is_seald="{ item }">
             <v-simple-checkbox
-              v-model="item.is_shield"
+              v-model="item.is_seald"
              
               :disabled="!invoice_doc.is_return"
              
@@ -877,8 +877,8 @@ export default {
         { text: __('UOM'), value: 'uom', align: 'center' },
         { text: __('Rate'), value: 'rate', align: 'center' },
         { text: __('Amount'), value: 'amount', align: 'center' },
-        { text: __('is Offer'), value: 'posa_is_offer', align: 'center' },
-        { text: __('is Sheild'), value: 'is_shield', align: 'center' },
+        // { text: __('is Offer'), value: 'posa_is_offer', align: 'center' },
+        { text: __('is Seald'), value: 'is_seald', align: 'center' },
       ],
     };
   },
@@ -1172,9 +1172,9 @@ export default {
     },
 
     get_invoice_doc() {
-      console.log(this.is_shield)
-      // if(item.is_shield==true){
-      //   item.is_shield=1;
+     
+      // if(item.is_seald==true){
+      //   item.is_seald=1;
       // }
       let doc = {};
       if (this.invoice_doc.name) {
@@ -1182,7 +1182,7 @@ export default {
       }
       doc.doctype = 'Sales Invoice';
       doc.is_pos = 1;
-      doc.is_shield=item.is_shield;
+    
       doc.ignore_pricing_rule = 1;
       doc.company = doc.company || this.pos_profile.company;
       doc.pos_profile = doc.pos_profile || this.pos_profile.name;
@@ -1229,7 +1229,7 @@ export default {
     })
       this.items.forEach((item) => {
         console.log("tyywueywueyr")
-        console.log(item.is_shield)
+        console.log(item.is_seald)
         
         const new_item = {
           item_code: item.item_code,
@@ -1239,7 +1239,7 @@ export default {
           posa_is_offer: item.posa_is_offer,
           posa_is_replace: item.posa_is_replace,
           is_free_item: item.is_free_item,
-          is_shield:item.is_shield,
+          is_seald:item.is_seald,
           qty: flt(item.qty),
           rate: flt(item.rate),
           uom: item.uom,
@@ -1413,18 +1413,7 @@ export default {
             return value
           }
         }
-        const vm = this;
-        console.log(item.posa_notes)
-        console.log("jjjjjjjjjjjkkkkkkkkkkkkkkkkkkkkkkkaaaaaaaaaaaaaaaaaaaaa")
-        if (!item.posa_notes &&this.invoice_doc.is_return) {
-          
-        evntBus.$emit('show_mesage', {
-          text: __(`There is no Reason Enter`),
-          color: 'error',
-        });
-        value = false;
-        // return value
-      }
+        
         if (item.has_batch_no&& without_serial==1) {
           if (item.stock_qty > item.actual_batch_qty) {
             evntBus.$emit('show_mesage', {

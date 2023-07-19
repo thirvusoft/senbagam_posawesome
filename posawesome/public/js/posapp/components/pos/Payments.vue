@@ -605,6 +605,7 @@
               :filter="salesPersonFilter"
               :disabled="readonly"
             >
+            
               <template v-slot:item="data">
                 <template>
                   <v-list-item-content>
@@ -615,6 +616,41 @@
                     <v-list-item-subtitle
                       v-if="data.item.sales_person_name != data.item.name"
                       v-html="`ID: ${data.item.name}`"
+                    ></v-list-item-subtitle>
+                  </v-list-item-content>
+                </template>
+              </template>
+            </v-autocomplete>
+          </v-col>
+            <v-col cols="12">
+            <v-autocomplete
+              dense
+              clearable
+              auto-select-first
+              outlined
+              color="primary"
+              :label="frappe._('Painters')"
+              v-model="painter"
+              :items="painters"
+              item-text="customer_name"
+              item-value="name"
+              background-color="white"
+              :no-data-text="__('Painter not found')"
+              hide-details
+              
+              :disabled="readonly"
+            >
+            
+              <template v-slot:item="data">
+                <template>
+                  <v-list-item-content>
+                    <v-list-item-title
+                      class="primary--text subtitle-1"
+                      v-html="data.item.customer_name"
+                    ></v-list-item-title>
+                    <v-list-item-subtitle
+                      v-if="data.item.customer_name != data.item.name"
+                      v-html="`${data.item.name}`"
                     ></v-list-item-subtitle>
                   </v-list-item-content>
                 </template>
@@ -716,6 +752,9 @@ export default {
     addresses: [],
     sales_persons: [],
     sales_person: '',
+    painters:[],
+    painter:"",
+  
     paid_change: 0,
     order_delivery_date: false,
     paid_change_rules: [],
@@ -744,6 +783,7 @@ export default {
         frappe.utils.play_sound('error');
         return;
       }
+     
       // validate phone payment
       let phone_payment_is_valid = true;
       if (!payment_received) {
@@ -832,7 +872,20 @@ export default {
         frappe.utils.play_sound('error');
         return;
       }
-
+      
+        // validate the return reason for bill thirvu customizations
+        if (this.invoice_doc.is_return) {
+          if(!this.invoice_doc.posa_notes){
+            evntBus.$emit('show_mesage', {
+              text: __(`There is no Reason Enter`),
+              color: 'error',
+            });
+          frappe.utils.play_sound('error');
+          return ;
+          }
+          
+          
+      }
       if (
         !this.invoice_doc.is_return &&
         this.redeemed_customer_credit >
@@ -850,7 +903,8 @@ export default {
       this.customer_credit_dict = [];
       this.redeem_customer_credit = false;
       this.is_cashback = true;
-      this.sales_person = '';
+      this.sales_person = frappe.session.user;
+      this.painters=this.painter;
 
       evntBus.$emit('new_invoice', 'false');
       this.back_to_invoice();
@@ -871,7 +925,9 @@ export default {
       data['redeemed_customer_credit'] = this.redeemed_customer_credit;
       data['customer_credit_dict'] = this.customer_credit_dict;
       data['is_cashback'] = this.is_cashback;
-
+      
+      console.log("dataaaaaaaaaaaaaaaaaaaaaaaaa")
+      console.log(data)
       const vm = this;
       frappe.call({
         method: 'posawesome.posawesome.api.posapp.submit_invoice',
@@ -951,6 +1007,7 @@ export default {
       const new_date = Date.parse(this.invoice_doc.due_date);
       if (new_date < parse_today) {
         setTimeout(() => {
+
           this.invoice_doc.due_date = today;
         }, 0);
       }
@@ -1061,6 +1118,34 @@ export default {
         },
       });
     },
+    get_painter() {
+      const vm = this;
+      if (
+        vm.pos_profile.posa_local_storage &&
+        localStorage.painters_storage
+      ) {
+        vm.sales_persons = JSON.parse(
+          localStorage.getItem('painters_storage')
+        );
+      }
+      frappe.call({
+        method: 'posawesome.posawesome.api.posapp.get_painter',
+        callback: function (r) {
+          console.log(r.message)
+          console.log("ppppppppppppppppp]]]]]]]]]]]]]]]]]]")
+          if (r.message) {
+            vm.painters = r.message;
+            if (vm.pos_profile.posa_local_storage) {
+              localStorage.setItem('painters_storage', '');
+              localStorage.setItem(
+                'painters_storage',
+                JSON.stringify(r.message)
+              );
+            }
+          }
+        },
+      });
+    },
     salesPersonFilter(item, queryText, itemText) {
       const textOne = item.sales_person_name
         ? item.sales_person_name.toLowerCase()
@@ -1097,6 +1182,8 @@ export default {
       formData['redeemed_customer_credit'] = this.redeemed_customer_credit;
       formData['customer_credit_dict'] = this.customer_credit_dict;
       formData['is_cashback'] = this.is_cashback;
+      
+     
 
       frappe
         .call({
@@ -1324,6 +1411,7 @@ export default {
         this.loyalty_amount = 0;
         this.get_addresses();
         this.get_sales_person_names();
+        this.get_painter();
       });
       evntBus.$on('register_pos_profile', (data) => {
         this.pos_profile = data.pos_profile;
@@ -1420,6 +1508,7 @@ export default {
     },
     sales_person() {
       if (this.sales_person) {
+        
         this.invoice_doc.sales_team = [
           {
             sales_person: this.sales_person,
@@ -1427,8 +1516,17 @@ export default {
           },
         ];
       } else {
+     
+        this.sales_person=frappe.session.user;
         this.invoice_doc.sales_team = [];
       }
+    },
+    painter() {
+      if (this.painter) {
+        this.invoice_doc.painters=this.painter;
+        
+       
+      } 
     },
   },
 };

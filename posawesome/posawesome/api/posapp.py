@@ -442,6 +442,20 @@ def get_sales_person_names():
     )
     return sales_persons
 
+@frappe.whitelist()
+def get_painter():
+    customers = frappe.db.sql(
+            """
+            SELECT name, mobile_no, email_id, tax_id, customer_name, primary_address
+            FROM `tabCustomer`
+            WHERE customer_group="Painters"
+            ORDER by name
+            """,
+            as_dict=1,
+        )
+    print(customers)
+    return customers
+    
 
 @frappe.whitelist()
 def update_invoice(data):
@@ -503,10 +517,14 @@ def update_invoice(data):
 def submit_invoice(invoice, data):
     data = json.loads(data)
     invoice = json.loads(invoice)
+    print("invoicceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")
+    print(invoice)
     invoice_doc = frappe.get_doc("Sales Invoice", invoice.get("name"))
     invoice_doc.update(invoice)
     if invoice.get("posa_delivery_date"):
         invoice_doc.update_stock = 0
+    if invoice.get("painters"):
+        invoice_doc.painters = invoice.get("painters")
     mop_cash_list = [
         i.mode_of_payment
         for i in invoice_doc.payments
@@ -938,7 +956,7 @@ def get_item_detail(item, doc=None, warehouse=None, price_list=None):
     if item.get("is_stock_item") and warehouse:
         res["actual_qty"] = get_stock_availability(item_code, warehouse)
     res["max_discount"] = max_discount
-    res["batch_no"]=item["batch_no"]
+    res["batch_no"]=item.get("batch_no")
     company=frappe.get_value("Warehouse",warehouse,"company")
     company_type=frappe.get_value("Company",company,"company_type")
     type_value=frappe.get_value("Company Type",company_type,"sales")
