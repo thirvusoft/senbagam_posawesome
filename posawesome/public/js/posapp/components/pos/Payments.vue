@@ -774,7 +774,7 @@ export default {
       evntBus.$emit('show_payment', 'false');
       evntBus.$emit('set_customer_readonly', false);
     },
-    submit(event, payment_received = false, print = false) {
+    async submit(event, payment_received = false, print = false) {
       if (!this.invoice_doc.is_return && this.total_payments < 0) {
         evntBus.$emit('show_mesage', {
           text: `Payments not correct`,
@@ -783,7 +783,7 @@ export default {
         frappe.utils.play_sound('error');
         return;
       }
-     
+     //await 
       // validate phone payment
       let phone_payment_is_valid = true;
       if (!payment_received) {
@@ -898,18 +898,21 @@ export default {
         frappe.utils.play_sound('error');
         return;
       }
+     
 
       this.submit_invoice(print);
       this.customer_credit_dict = [];
       this.redeem_customer_credit = false;
       this.is_cashback = true;
-      this.sales_person = frappe.session.user;
+      
+      // this.sales_person = '';
       this.painters=this.painter;
 
       evntBus.$emit('new_invoice', 'false');
       this.back_to_invoice();
     },
     submit_invoice(print) {
+     
       this.invoice_doc.payments.forEach((payment) => {
         payment.amount = flt(payment.amount);
       });
@@ -925,11 +928,26 @@ export default {
       data['redeemed_customer_credit'] = this.redeemed_customer_credit;
       data['customer_credit_dict'] = this.customer_credit_dict;
       data['is_cashback'] = this.is_cashback;
-      
-      console.log("dataaaaaaaaaaaaaaaaaaaaaaaaa")
-      console.log(data)
-      const vm = this;
-      frappe.call({
+      const sales_person= frappe.call({
+        method: 'posawesome.posawesome.api.posapp.sales_person',
+        args: {
+          user: frappe.session.user,
+          
+        },
+      });
+      sales_person.then(r => {
+      if(r.message) {
+            
+            this.sales_person =r.message;
+            this.invoice_doc.sales_team = [
+          {
+            sales_person: r.message,
+            allocated_percentage: 100,
+          },
+        ];
+        }
+        const vm = this;
+        frappe.call({
         method: 'posawesome.posawesome.api.posapp.submit_invoice',
         args: {
           data: data,
@@ -951,6 +969,10 @@ export default {
           }
         },
       });
+    
+      });
+      
+      
     },
     set_full_amount(idx) {
       this.invoice_doc.payments.forEach((payment) => {
@@ -1131,8 +1153,6 @@ export default {
       frappe.call({
         method: 'posawesome.posawesome.api.posapp.get_painter',
         callback: function (r) {
-          console.log(r.message)
-          console.log("ppppppppppppppppp]]]]]]]]]]]]]]]]]]")
           if (r.message) {
             vm.painters = r.message;
             if (vm.pos_profile.posa_local_storage) {
@@ -1508,16 +1528,28 @@ export default {
     },
     sales_person() {
       if (this.sales_person) {
-        
-        this.invoice_doc.sales_team = [
+        const sales_person= frappe.call({
+        method: 'posawesome.posawesome.api.posapp.sales_person',
+        args: {
+          user: frappe.session.user,
+          
+        },
+      });
+      sales_person.then(r => {
+      if(r.message) {
+            
+            this.sales_person =r.message;
+            this.invoice_doc.sales_team = [
           {
             sales_person: this.sales_person,
             allocated_percentage: 100,
           },
         ];
+        }
+    
+      });
       } else {
-     
-        this.sales_person=frappe.session.user;
+    
         this.invoice_doc.sales_team = [];
       }
     },

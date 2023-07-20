@@ -1228,8 +1228,7 @@ export default {
       }
     })
       this.items.forEach((item) => {
-        console.log("tyywueywueyr")
-        console.log(item.is_seald)
+     
         
         const new_item = {
           item_code: item.item_code,
@@ -1274,8 +1273,7 @@ export default {
 
     update_invoice(doc) {
       const vm = this;
-      console.log("12346")
-      console.log()
+     
       frappe.call({
         method: 'posawesome.posawesome.api.posapp.update_invoice',
         args: {
@@ -1283,7 +1281,7 @@ export default {
         },
         async: false,
         callback: function (r) {
-          console.log(doc)
+       
           if (r.message) {
             vm.invoice_doc = r.message;
           }
@@ -1302,7 +1300,7 @@ export default {
     },
 
     show_payment() {
-     
+      
       if (!this.customer) {
         evntBus.$emit('show_mesage', {
           text: __(`There is no Customer !`),
@@ -1317,9 +1315,32 @@ export default {
         });
         return;
       }
-    
+       
+      this.seald_validation()
       this.serial_no_validation()
-     
+      
+    },
+    seald_validation(){
+      
+      this.items.every((item) => {
+        console.log("retuen")
+        console.log(this.invoice_doc.is_return)
+        console.log(!item.is_seald)
+        if (this.invoice_doc.is_return&& !item.is_seald) {
+            console.log(item.is_seald)
+            evntBus.$emit('show_mesage', {
+              text: __(
+                `Open Seald Item Cannot Taken Return `,
+                
+              ),
+              color: 'error',
+            });
+           
+           throw new Error(`Open Seald Item Cannot Taken Return `);
+        }
+        console.log("end loop")
+        return true;
+       })
     },
     // Thirvu customization start
     serial_no_validation(){
@@ -1350,8 +1371,9 @@ export default {
     });
     //end
     },
+    
      validate(without_serial) {
-     
+      
       let value = true;
       
       this.items.forEach((item) => {
@@ -1372,6 +1394,7 @@ export default {
             return value
           }
         }
+         
         if (item.qty == 0) {
           evntBus.$emit('show_mesage', {
             text: __(`Quantity for item '{0}' cannot be Zero (0)`, [
@@ -1565,8 +1588,7 @@ export default {
         item.serial_no=item.serial_no
 
       }
-      console.log("hjsfjshfddkfhgkdfh")
-      console.log(item.serial_no)
+      
       frappe.call({
         method: 'posawesome.posawesome.api.posapp.get_item_detail',
         args: {
@@ -1599,7 +1621,7 @@ export default {
           },
         },
         callback: function (r) {
-          console.log(r.message)
+          
           if (r.message) {
             const data = r.message;
             if (
