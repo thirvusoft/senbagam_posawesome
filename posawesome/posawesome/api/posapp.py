@@ -442,6 +442,19 @@ def get_sales_person_names():
     )
     return sales_persons
 
+@frappe.whitelist()
+def get_painter():
+    customers = frappe.db.sql(
+            """
+            SELECT name, mobile_no, email_id, tax_id, customer_name, primary_address
+            FROM `tabCustomer`
+            WHERE customer_group="Painters"
+            ORDER by name
+            """,
+            as_dict=1,
+        )
+    return customers
+    
 
 @frappe.whitelist()
 def update_invoice(data):
@@ -499,10 +512,17 @@ def update_invoice(data):
 def submit_invoice(invoice, data):
     data = json.loads(data)
     invoice = json.loads(invoice)
+    print("invoicceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")
+    print(invoice)
     invoice_doc = frappe.get_doc("Sales Invoice", invoice.get("name"))
     invoice_doc.update(invoice)
     if invoice.get("posa_delivery_date"):
         invoice_doc.update_stock = 0
+    if invoice.get("painters"):
+        invoice_doc.painters = invoice.get("painters")
+    # if invoice.get("sales_tesm"):
+
+
     mop_cash_list = [
         i.mode_of_payment
         for i in invoice_doc.payments
@@ -617,7 +637,6 @@ def set_batch_nos_for_bundels(doc, warehouse_field, throw=False):
         has_batch_no = frappe.db.get_value("Item", d.item_code, "has_batch_no")
         warehouse = d.get(warehouse_field, None)
         if has_batch_no and warehouse and qty > 0:
-            print(d.batch_no)
             if not d.batch_no:
                 d.batch_no = get_batch_no(
                     d.item_code, warehouse, qty, throw, d.serial_no
@@ -917,12 +936,9 @@ def get_item_detail(item, doc=None, warehouse=None, price_list=None):
     item = json.loads(item)
     item_code = item.get("item_code")
     if warehouse and item.get("has_batch_no") and not item.get("batch_no"):
-        print("ite")
-        print(item.get("serial_no"))
         item["batch_no"] = get_batch_no(
             item_code, warehouse, item.get("qty"), False, item.get("serial_no")
         )
-        
     item["selling_price_list"] = price_list
     max_discount = frappe.get_value("Item", item_code, "max_discount")
     res = get_item_details(
@@ -933,7 +949,14 @@ def get_item_detail(item, doc=None, warehouse=None, price_list=None):
     if item.get("is_stock_item") and warehouse:
         res["actual_qty"] = get_stock_availability(item_code, warehouse)
     res["max_discount"] = max_discount
-   
+    res["batch_no"]=item.get("batch_no")
+    company=frappe.get_value("Warehouse",warehouse,"company")
+    company_type=frappe.get_value("Company",company,"company_type")
+    type_value=frappe.get_value("Company Type",company_type,"sales")
+    if type_value==0:
+        res["batch_no"]=""
+        res["serial_no"]=""
+    
     return res
 
 
@@ -1660,6 +1683,7 @@ def auto_create_items():
 
 @frappe.whitelist()
 def search_serial_or_batch_or_barcode_number(search_value, search_serial_no):
+   
     # search barcode no
     barcode_data = frappe.db.get_value(
         "Item Barcode",
@@ -1699,22 +1723,18 @@ def serial_no_validation(company):
     company_type=frappe.get_value("Company",company,"company_type")
     if company_type:
         sales=frappe.get_value("Company Type",company_type,"sales")
+    print("sales_value")
     print(sales)
     return sales
 
 
 
 
-#     let without_serial=0;
-#        frappe.call({
-#         method: 'posawesome.posawesome.api.posapp.serial_no_validation',
-#         args: {
-#           company: this.pos_profile.company,
-#         },
-        
-#         callback: function (r) {
-#           if (r.message) {
-#             without_serial=r.message
-#           }
-#         },
-#       });
+@frappe.whitelist()
+def sales_person(user):
+    sales_person=frappe.get_doc("Sales Person",{"user":user})
+    if sales_person:
+        person_name=sales_person.name
+        return person_name
+
+

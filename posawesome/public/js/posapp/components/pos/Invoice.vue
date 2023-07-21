@@ -188,6 +188,16 @@
                 disabled
               ></v-simple-checkbox>
             </template>
+          
+            <template v-slot:item.is_seald="{ item }">
+            <v-simple-checkbox
+              v-model="item.is_seald"
+             
+              :disabled="!invoice_doc.is_return"
+             
+            ></v-simple-checkbox>
+            </template>
+
 
             <template v-slot:expanded-item="{ headers, item }">
               <td :colspan="headers.length" class="ma-0 pa-0">
@@ -213,6 +223,7 @@
                       <v-icon>mdi-minus-circle-outline</v-icon>
                     </v-btn>
                   </v-col>
+                  
                   <v-col cols="1">
                     <v-btn
                       :disabled="!!item.posa_is_offer || !!item.posa_is_replace"
@@ -473,7 +484,7 @@
                     cols="12"
                     v-if="item.has_serial_no == 1 || item.serial_no"
                   >
-                    <v-autocomplete
+                  <v-autocomplete
                       v-model="item.serial_no_selected"
                       :items="item.serial_no_data"
                       item-text="serial_no"
@@ -484,6 +495,7 @@
                       small-chips
                       :label="frappe._('Serial No')"
                       multiple
+                      disabled
                       @change="set_serial_no(item)"
                     ></v-autocomplete>
                   </v-col>
@@ -865,7 +877,8 @@ export default {
         { text: __('UOM'), value: 'uom', align: 'center' },
         { text: __('Rate'), value: 'rate', align: 'center' },
         { text: __('Amount'), value: 'amount', align: 'center' },
-        { text: __('is Offer'), value: 'posa_is_offer', align: 'center' },
+        // { text: __('is Offer'), value: 'posa_is_offer', align: 'center' },
+        { text: __('is Seald'), value: 'is_seald', align: 'center' },
       ],
     };
   },
@@ -1024,12 +1037,16 @@ export default {
       if (!item.qty) {
         item.qty = 1;
       }
+      if (!item.posa_is_offer1) {
+        item.posa_is_offer = 0;
+      }
       if (!item.posa_is_offer) {
         item.posa_is_offer = 0;
       }
       if (!item.posa_is_replace) {
         item.posa_is_replace = '';
       }
+     
       new_item.stock_qty = item.qty;
       new_item.discount_amount = 0;
       new_item.discount_percentage = 0;
@@ -1155,12 +1172,17 @@ export default {
     },
 
     get_invoice_doc() {
+     
+      // if(item.is_seald==true){
+      //   item.is_seald=1;
+      // }
       let doc = {};
       if (this.invoice_doc.name) {
         doc = { ...this.invoice_doc };
       }
       doc.doctype = 'Sales Invoice';
       doc.is_pos = 1;
+    
       doc.ignore_pricing_rule = 1;
       doc.company = doc.company || this.pos_profile.company;
       doc.pos_profile = doc.pos_profile || this.pos_profile.name;
@@ -1189,7 +1211,25 @@ export default {
 
     get_invoice_items() {
       const items_list = [];
+      const company_type = frappe.call({
+			method: 'posawesome.posawesome.api.posapp.serial_no_validation',
+			args: {
+				company:this.pos_profile.company
+			},
+		});
+    company_type.then(r => {
+      if(r.message==1){
+              item.serial_no=item.serial_no_selected[0]
+             
+            }
+      else{
+        item.serial_no=item.serial_no
+
+      }
+    })
       this.items.forEach((item) => {
+     
+        
         const new_item = {
           item_code: item.item_code,
           posa_row_id: item.posa_row_id,
@@ -1198,6 +1238,7 @@ export default {
           posa_is_offer: item.posa_is_offer,
           posa_is_replace: item.posa_is_replace,
           is_free_item: item.is_free_item,
+          is_seald:item.is_seald,
           qty: flt(item.qty),
           rate: flt(item.rate),
           uom: item.uom,
@@ -1232,6 +1273,7 @@ export default {
 
     update_invoice(doc) {
       const vm = this;
+     
       frappe.call({
         method: 'posawesome.posawesome.api.posapp.update_invoice',
         args: {
@@ -1239,6 +1281,7 @@ export default {
         },
         async: false,
         callback: function (r) {
+       
           if (r.message) {
             vm.invoice_doc = r.message;
           }
@@ -1257,6 +1300,7 @@ export default {
     },
 
     show_payment() {
+      
       if (!this.customer) {
         evntBus.$emit('show_mesage', {
           text: __(`There is no Customer !`),
@@ -1271,8 +1315,32 @@ export default {
         });
         return;
       }
+       
+      this.seald_validation()
       this.serial_no_validation()
-     
+      
+    },
+    seald_validation(){
+      
+      this.items.every((item) => {
+        console.log("retuen")
+        console.log(this.invoice_doc.is_return)
+        console.log(!item.is_seald)
+        if (this.invoice_doc.is_return&& !item.is_seald) {
+            console.log(item.is_seald)
+            evntBus.$emit('show_mesage', {
+              text: __(
+                `Open Seald Item Cannot Taken Return `,
+                
+              ),
+              color: 'error',
+            });
+           
+           throw new Error(`Open Seald Item Cannot Taken Return `);
+        }
+        console.log("end loop")
+        return true;
+       })
     },
     // Thirvu customization start
     serial_no_validation(){
@@ -1303,8 +1371,9 @@ export default {
     });
     //end
     },
+    
      validate(without_serial) {
-     
+      
       let value = true;
       
       this.items.forEach((item) => {
@@ -1325,6 +1394,7 @@ export default {
             return value
           }
         }
+         
         if (item.qty == 0) {
           evntBus.$emit('show_mesage', {
             text: __(`Quantity for item '{0}' cannot be Zero (0)`, [
@@ -1366,6 +1436,7 @@ export default {
             return value
           }
         }
+        
         if (item.has_batch_no&& without_serial==1) {
           if (item.stock_qty > item.actual_batch_qty) {
             evntBus.$emit('show_mesage', {
@@ -1378,6 +1449,8 @@ export default {
             value = false;
           }
         }
+     
+    
         // end
         if (this.pos_profile.posa_allow_user_to_edit_additional_discount) {
           const clac_percentage = (this.discount_amount / this.Total) * 100;
@@ -1500,7 +1573,22 @@ export default {
 
     update_item_detail(item) {
       const vm = this;
-      console.log(item.serial_no_selected)
+      const company_type = frappe.call({
+			method: 'posawesome.posawesome.api.posapp.serial_no_validation',
+			args: {
+				company:this.pos_profile.company
+			},
+		});
+    company_type.then(r => {
+      if(r.message==1){
+              item.serial_no=item.serial_no_selected[0]
+             
+            }
+      else{
+        item.serial_no=item.serial_no
+
+      }
+      
       frappe.call({
         method: 'posawesome.posawesome.api.posapp.get_item_detail',
         args: {
@@ -1527,13 +1615,13 @@ export default {
             update_stock: this.pos_profile.update_stock,
             price_list: this.get_price_list(),
             has_batch_no: item.has_batch_no,
-            serial_no: item.serial_no_selected[0],
+            serial_no: item.serial_no,
             batch_no: item.batch_no,
             is_stock_item: item.is_stock_item,
           },
         },
         callback: function (r) {
-          console.log(r.message)
+          
           if (r.message) {
             const data = r.message;
             if (
@@ -1588,7 +1676,9 @@ export default {
           }
         },
       });
-    },
+  
+    })
+  },
 
     fetch_customer_details() {
       const vm = this;
@@ -2635,6 +2725,7 @@ export default {
       });
     });
     evntBus.$on('load_return_invoice', (data) => {
+      
       this.new_invoice(data.invoice_doc);
       this.discount_amount = -data.return_doc.discount_amount;
       this.additional_discount_percentage =
@@ -2643,6 +2734,7 @@ export default {
     });
     evntBus.$on('set_new_line', (data) => {
       this.new_line = data;
+     
     });
     document.addEventListener('keydown', this.shortOpenPayment.bind(this));
     document.addEventListener('keydown', this.shortDeleteFirstItem.bind(this));
