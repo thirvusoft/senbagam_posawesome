@@ -338,8 +338,7 @@ export default {
       }
     },
     async enter_event() {
-      console.log("mncnbkvkdhkdhkfdhidfh")
-      console.log(this.pos_profile.company)
+    
       const company_type = frappe.call({
 			method: 'posawesome.posawesome.api.posapp.serial_no_validation',
 			args: {
@@ -348,7 +347,7 @@ export default {
 		});
     company_type.then(r => {
       if(r.message==1){
-              console.log("ggggggggggggggggg")
+             
               new_item.to_set_serial_no = this.first_search;
               new_item.serial_no = this.first_search;
             }

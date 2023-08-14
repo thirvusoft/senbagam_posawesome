@@ -692,12 +692,13 @@
                 color="primary"
                 :maxlength="4"
                   :counter="4"
-               
+                 
                 clearable
                 :label="frappe._('Enter OTP')"
                 background-color="white"
                 v-model="enter_otp"
                 hide-details
+                
               ></v-text-field>
             </v-col>
             <v-col cols="3">
@@ -862,8 +863,8 @@ export default {
 
     },
     verify_otp(){
-      console.log("sdfghkfgkgfkhfgkhkh")
-    console.log( this.original_otp)
+    
+   
       frappe.call({
         method: 'posawesome.posawesome.api.posapp.verify_otp',
         args: {
@@ -873,8 +874,7 @@ export default {
         },
         async: true,
         callback: function (r) {
-          console.log("trrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrs")
-          console.log(r.message)
+         
           
           
         },
@@ -1048,7 +1048,7 @@ export default {
         },
       });
       sales_person.then(r => {
-        console.log("ggsdjsgdjsgdjgsd")
+ 
       if(r.message) {
             
             this.sales_person =r.message;
@@ -1676,10 +1676,10 @@ export default {
       }
     },
     painter() {
-      console.log("jhhhhhhhhhhhhhhhskaffffffffffffff")
+     
       if (this.painter) {
         this.invoice_doc.painters=this.painter;
-        console.log(this.painter)
+      
         const painter_validation = frappe.call({
 			method: 'posawesome.posawesome.api.posapp.painter_mobile_number',
 			args: {
@@ -1687,10 +1687,10 @@ export default {
 			},
 		});
     painter_validation.then(r => {
-      console.log(r)
+   
       if(r.message){
-        console.log("jhg46666666666612377777777777777777777763465234256436523462534632463")
-          console.log(r.message)
+
+        
           this.otp_mobile_no=r.message
              
             }

@@ -137,7 +137,7 @@ export default {
           if (r.message) {
             evntBus.$emit('open_ClosingDialog', r.message);
           } else {
-            // console.log(r);
+           
           }
         });
     },

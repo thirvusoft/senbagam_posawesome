@@ -512,8 +512,7 @@ def update_invoice(data):
 def submit_invoice(invoice, data):
     data = json.loads(data)
     invoice = json.loads(invoice)
-    print("invoicceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")
-    print(invoice)
+
     invoice_doc = frappe.get_doc("Sales Invoice", invoice.get("name"))
     invoice_doc.update(invoice)
     if invoice.get("posa_delivery_date"):
@@ -1726,8 +1725,7 @@ def serial_no_validation(company):
     company_type=frappe.get_value("Company",company,"company_type")
     if company_type:
         sales=frappe.get_value("Company Type",company_type,"sales")
-    print("sales_value")
-    print(sales)
+   
     return sales
 
 
@@ -1741,11 +1739,10 @@ def sales_person(user):
 
 @frappe.whitelist()
 def painter_mobile_number(painter):
-    print(painter)
-    print("valueeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")
+ 
     painter_no=""
     painter_no=frappe.db.get_value("Customer",painter,"mobile_no")
-    print(painter)
+  
     if painter_no:
         return painter_no
     return painter_no

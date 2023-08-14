@@ -147,7 +147,7 @@ export default {
           new_item.is_shield=0
           items.push(new_item);
         });
-        console.log(items)
+      
         invoice_doc.items = items;
 
         invoice_doc.is_return = 1;
