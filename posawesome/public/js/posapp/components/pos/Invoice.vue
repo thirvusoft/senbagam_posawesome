@@ -2418,6 +2418,8 @@ export default {
     },
 
     ApplyOnGiveProduct(offer, item_code) {
+      console.log("iiiiiiiiiiiiiiiiiiiiirrrrrrrrrrrrrrrrrrrrrrrrrr")
+      console.log(offer)
       if (!item_code) {
         item_code = offer.give_item;
       }
