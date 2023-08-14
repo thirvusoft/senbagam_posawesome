@@ -690,8 +690,9 @@
                 dense
                 outlined
                 color="primary"
-                maxlength = "4"
-                type="number"
+                :maxlength="4"
+                  :counter="4"
+               
                 clearable
                 :label="frappe._('Enter OTP')"
                 background-color="white"

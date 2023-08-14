@@ -41,6 +41,10 @@
                 <v-text-field
                   dense
                   color="primary"
+                  
+            
+                  :maxlength="10"
+                  :counter="10"
                   :label="frappe._('Mobile No')"
                   background-color="white"
                   hide-details
