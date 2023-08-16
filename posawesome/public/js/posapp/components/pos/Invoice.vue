@@ -256,7 +256,7 @@
                       :label="frappe._('QTY')"
                       background-color="white"
                       hide-details
-                      :value="formtFloat(item.qty)"
+                      :value="item.qty"
                       @change="
                         [
                           setFormatedFloat(item, 'qty', null, false, $event),
