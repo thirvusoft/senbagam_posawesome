@@ -4,6 +4,7 @@
 
 from __future__ import unicode_literals
 import json
+import random as r
 import frappe
 from frappe.utils import nowdate, flt, cstr
 from frappe import _
@@ -30,7 +31,6 @@ from posawesome.posawesome.doctype.delivery_charges.delivery_charges import (
     get_applicable_delivery_charges as _get_applicable_delivery_charges,
 )
 from frappe.utils.caching import redis_cache
-
 
 @frappe.whitelist()
 def get_opening_dialog_data():
@@ -512,8 +512,7 @@ def update_invoice(data):
 def submit_invoice(invoice, data):
     data = json.loads(data)
     invoice = json.loads(invoice)
-    print("invoicceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")
-    print(invoice)
+
     invoice_doc = frappe.get_doc("Sales Invoice", invoice.get("name"))
     invoice_doc.update(invoice)
     if invoice.get("posa_delivery_date"):
@@ -992,6 +991,7 @@ def create_customer(
     territory=None,
     customer_type=None,
     gender=None,
+    refered_by=None,
     method="create",
 ):
     pos_profile = json.loads(pos_profile_doc)
@@ -1005,8 +1005,10 @@ def create_customer(
                     "posa_referral_company": company,
                     "tax_id": tax_id,
                     "mobile_no": mobile_no,
+                    "mobile_no1":mobile_no,
                     "email_id": email_id,
                     "posa_referral_code": referral_code,
+                    "refered_by":refered_by,
                     "posa_birthday": birthday,
                     "customer_type": customer_type,
                     "gender": gender,
@@ -1723,8 +1725,7 @@ def serial_no_validation(company):
     company_type=frappe.get_value("Company",company,"company_type")
     if company_type:
         sales=frappe.get_value("Company Type",company_type,"sales")
-    print("sales_value")
-    print(sales)
+   
     return sales
 
 
@@ -1732,9 +1733,64 @@ def serial_no_validation(company):
 
 @frappe.whitelist()
 def sales_person(user):
-    sales_person=frappe.get_doc("Sales Person",{"user":user})
-    if sales_person:
-        person_name=sales_person.name
-        return person_name
+    return frappe.db.exists("Sales Person",{"user":user}) or ''
+    
 
 
+@frappe.whitelist()
+def painter_mobile_number(painter):
+ 
+    painter_no=""
+    painter_no=frappe.db.get_value("Customer",painter,"mobile_no")
+  
+    if painter_no:
+        return painter_no
+    return painter_no
+
+
+
+@frappe.whitelist()
+def send_otp(mobile_no):
+    final_otp=otpgen()
+
+    if mobile_no:
+        mobile_no="91"+mobile_no
+        
+        import requests
+
+        url = f"""https://api.msg91.com/api/v5/otp?template_id=63b57319d6fc0504dd28d3c2&mobile={mobile_no}&authkey=387408ATKT6CcDJGRW63aa76cbP1&otp={final_otp}&VAR1=CUSTOMER"""
+
+        payload = {}
+        headers = {
+        'cook': 'PHPSESSID=407l8l1q6v3v69d02b8p9kej50',
+        'Cookie': 'PHPSESSID=d4cp73604c703vv5eor29jhta2'
+        }
+        response = requests.request("GET", url, headers=headers, data=payload)
+        response_value=json.loads(response.text)
+        
+        return response_value,final_otp
+    
+   
+
+
+
+
+def otpgen():
+	otp=""
+	for i in range(4):
+		otp+=str(r.randint(1,9))
+
+	return otp
+otpgen()
+
+
+
+
+@frappe.whitelist()
+def verify_otp(enter_otp,original_otp):
+    if enter_otp==original_otp:
+        frappe.throw(_("OTP Matched"))
+        return True
+    else:
+        frappe.throw(_("OTP not Matched please try again"))
+        return False

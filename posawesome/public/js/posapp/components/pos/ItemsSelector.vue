@@ -338,9 +338,25 @@ export default {
       }
     },
     async enter_event() {
-      console.log("mncnbkvkdhkdhkfdhidfh")
-      console.log(this.pos_profile.company)
-     
+    
+      const company_type = frappe.call({
+			method: 'posawesome.posawesome.api.posapp.serial_no_validation',
+			args: {
+				company:this.pos_profile.company
+			},
+		});
+    company_type.then(r => {
+      if(r.message==1){
+             
+              new_item.to_set_serial_no = this.first_search;
+              new_item.serial_no = this.first_search;
+            }
+      else{
+        new_item.to_set_serial_no = "";
+
+      }
+    })
+            
       let match = false;
       if (!this.filtred_items.length || !this.first_search) {
         return;
@@ -361,24 +377,8 @@ export default {
       ) {
         new_item.serial_no_data.forEach((element) => {
           if (this.search && element.serial_no == this.search) {
-            const company_type = frappe.call({
-			method: 'posawesome.posawesome.api.posapp.serial_no_validation',
-			args: {
-				company:this.pos_profile.company
-			},
-		});
-    company_type.then(r => {
-      if(r.message==1){
-              console.log("ggggggggggggggggg")
-              new_item.to_set_serial_no = this.first_search;
-              new_item.serial_no = this.first_search;
-            }
-      else{
-        new_item.to_set_serial_no = this.first_search;
-
-      }
-    })
-            
+           
+   
             
             match = true;
           }

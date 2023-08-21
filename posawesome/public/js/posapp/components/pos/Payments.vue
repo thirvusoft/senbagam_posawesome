@@ -603,7 +603,7 @@
               :no-data-text="__('Sales Person not found')"
               hide-details
               :filter="salesPersonFilter"
-              :disabled="readonly"
+              
             >
             
               <template v-slot:item="data">
@@ -638,7 +638,7 @@
               :no-data-text="__('Painter not found')"
               hide-details
               
-              :disabled="readonly"
+              
             >
             
               <template v-slot:item="data">
@@ -657,6 +657,73 @@
               </template>
             </v-autocomplete>
           </v-col>
+          <v-col cols="12">
+              <v-text-field
+                dense
+                clearable
+              
+                readonly
+                outlined
+                color="primary"
+                :label="frappe._('OTP Mobile No')"
+                background-color="white"
+                v-model="otp_mobile_no"
+                hide-details
+                :disabled="!painter"
+              ></v-text-field>
+            </v-col>
+           
+            <v-col cols="3">
+          <v-btn
+            block
+            large
+            color="primary"
+            dark
+            @click="send_otp"
+            >{{ __('Send OTP') }}</v-btn
+          >
+        </v-col>
+        
+          
+        <v-col cols="3">
+              <v-text-field
+                dense
+                outlined
+                color="primary"
+                :maxlength="4"
+                  :counter="4"
+                 
+                clearable
+                :label="frappe._('Enter OTP')"
+                background-color="white"
+                v-model="enter_otp"
+                hide-details
+                
+              ></v-text-field>
+            </v-col>
+            <v-col cols="3">
+          <v-btn
+            block
+            large
+            color="primary"
+            @click="verify_otp"
+            dark
+            >{{ __('Verify OTP') }}</v-btn
+          >
+        </v-col>
+        <v-col cols="3">
+              <v-text-field
+              clearable
+                dense
+                outlined
+                style="display: none;"
+                color="primary"
+                :label="frappe._('Original OTP')"
+                background-color="white"
+                v-model="original_otp"
+                hide-details
+              ></v-text-field>
+            </v-col>
         </v-row>
       </div>
     </v-card>
@@ -754,6 +821,9 @@ export default {
     sales_person: '',
     painters:[],
     painter:"",
+    otp_mobile_no:"",
+    enter_otp:"",
+    original_otp:"",
   
     paid_change: 0,
     order_delivery_date: false,
@@ -770,6 +840,48 @@ export default {
   }),
 
   methods: {
+    send_otp(){
+      const vm = this;
+      frappe.call({
+        method: 'posawesome.posawesome.api.posapp.send_otp',
+        args: {
+          mobile_no: this.otp_mobile_no,
+          
+        },
+        
+      callback: function (r) {
+         
+       if(r.message[0]["type"]=="success"){
+       
+         vm.original_otp=r.message[1]
+            
+
+          }
+          
+        },
+      });
+
+    },
+    verify_otp(){
+    
+   
+      frappe.call({
+        method: 'posawesome.posawesome.api.posapp.verify_otp',
+        args: {
+          enter_otp: this.enter_otp,
+          original_otp:this.original_otp
+          
+        },
+        async: true,
+        callback: function (r) {
+         
+          
+          
+        },
+      });
+
+
+    },
     back_to_invoice() {
       evntBus.$emit('show_payment', 'false');
       evntBus.$emit('set_customer_readonly', false);
@@ -936,6 +1048,7 @@ export default {
         },
       });
       sales_person.then(r => {
+ 
       if(r.message) {
             
             this.sales_person =r.message;
@@ -1395,6 +1508,15 @@ export default {
         return false;
       }
     },
+    otp_validation(){
+      if (this.painter) {
+        
+          return true;
+       
+      } else {
+        return false;
+      }
+    },
     request_payment_field() {
       let res = false;
       if (!this.pos_settings || this.pos_settings.invoice_fields.length == 0) {
@@ -1554,9 +1676,30 @@ export default {
       }
     },
     painter() {
+     
       if (this.painter) {
         this.invoice_doc.painters=this.painter;
+      
+        const painter_validation = frappe.call({
+			method: 'posawesome.posawesome.api.posapp.painter_mobile_number',
+			args: {
+				painter:this.painter
+			},
+		});
+    painter_validation.then(r => {
+   
+      if(r.message){
+
         
+          this.otp_mobile_no=r.message
+             
+            }
+      else{
+        this.otp_mobile_no=""
+      }
+    })
+     
+      
        
       } 
     },

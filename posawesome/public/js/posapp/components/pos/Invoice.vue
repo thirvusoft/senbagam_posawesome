@@ -256,7 +256,7 @@
                       :label="frappe._('QTY')"
                       background-color="white"
                       hide-details
-                      :value="formtFloat(item.qty)"
+                      :value="item.qty"
                       @change="
                         [
                           setFormatedFloat(item, 'qty', null, false, $event),
@@ -1323,11 +1323,9 @@ export default {
     seald_validation(){
       
       this.items.every((item) => {
-        console.log("retuen")
-        console.log(this.invoice_doc.is_return)
-        console.log(!item.is_seald)
+      
         if (this.invoice_doc.is_return&& !item.is_seald) {
-            console.log(item.is_seald)
+        
             evntBus.$emit('show_mesage', {
               text: __(
                 `Open Seald Item Cannot Taken Return `,
@@ -1338,7 +1336,7 @@ export default {
            
            throw new Error(`Open Seald Item Cannot Taken Return `);
         }
-        console.log("end loop")
+     
         return true;
        })
     },
@@ -2418,6 +2416,7 @@ export default {
     },
 
     ApplyOnGiveProduct(offer, item_code) {
+      
       if (!item_code) {
         item_code = offer.give_item;
       }

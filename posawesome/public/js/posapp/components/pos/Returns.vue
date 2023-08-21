@@ -132,14 +132,12 @@ export default {
       });
     },
     submit_dialog() {
-      console.log()
+      
       if (this.selected.length > 0) {
         const return_doc = this.selected[0];
         const invoice_doc = {};
         const items = [];
         return_doc.items.forEach((item) => {
-          console.log(item.serial_no)
-          console.log(item.batch_no)
           const new_item = { ...item };
           new_item.qty = item.qty * -1;
           new_item.stock_qty = item.stock_qty * -1;
@@ -149,7 +147,7 @@ export default {
           new_item.is_shield=0
           items.push(new_item);
         });
-        console.log(items)
+      
         invoice_doc.items = items;
 
         invoice_doc.is_return = 1;

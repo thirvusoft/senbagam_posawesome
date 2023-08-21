@@ -41,6 +41,10 @@
                 <v-text-field
                   dense
                   color="primary"
+                  
+            
+                  :maxlength="10"
+                  :counter="10"
                   :label="frappe._('Mobile No')"
                   background-color="white"
                   hide-details
@@ -57,15 +61,23 @@
                   v-model="email_id"
                 ></v-text-field>
               </v-col>
-              <v-col cols="6">
+               <v-col cols="6">
+                <v-select
+                  dense
+                  label="Refered By"
+                  :items="refered_by_list"
+                  v-model="refered_by"
+                ></v-select>
+              </v-col>
+              <!-- <v-col cols="6">
                 <v-select
                   dense
                   label="Gender"
                   :items="genders"
                   v-model="gender"
                 ></v-select>
-              </v-col>
-              <v-col cols="6">
+              </v-col> -->
+              <!-- <v-col cols="6">
                 <v-text-field
                   dense
                   color="primary"
@@ -74,8 +86,8 @@
                   hide-details
                   v-model="referral_code"
                 ></v-text-field>
-              </v-col>
-              <v-col cols="6">
+              </v-col> -->
+              <!-- <v-col cols="6">
                 <v-menu
                   ref="birthday_menu"
                   v-model="birthday_menu"
@@ -106,7 +118,7 @@
                   >
                   </v-date-picker>
                 </v-menu>
-              </v-col>
+              </v-col> -->
               <v-col cols="6">
                 <v-autocomplete
                   clearable
@@ -192,9 +204,11 @@ export default {
     groups: [],
     territory: '',
     territorys: [],
+    refered_by_list:[],
     genders: [],
     customer_type: 'Individual',
     gender: '',
+    refered_by:"",
     loyalty_points: null,
     loyalty_program: null,
   }),
@@ -216,6 +230,7 @@ export default {
       this.customer_id = '';
       this.customer_type = 'Individual';
       this.gender = '';
+      this.refered_by='',
       this.loyalty_points = null;
       this.loyalty_program = null;
     },
@@ -270,6 +285,21 @@ export default {
           }
         });
     },
+    referedby() {
+      const vm = this;
+      frappe.db
+        .get_list('Referral Tree', {
+          fields: ['name'],
+          
+        })
+        .then((data) => {
+          if (data.length > 0) {
+            data.forEach((el) => {
+              vm.refered_by_list.push(el.name);
+            });
+          }
+        });
+    },
     submit_dialog() {
       // validate if all required fields are filled
       if (!this.customer_name) {
@@ -308,6 +338,7 @@ export default {
           territory: this.territory,
           customer_type: this.customer_type,
           gender: this.gender,
+          refered_by:this.refered_by,
           method: this.customer_id ? 'update' : 'create',
           pos_profile_doc: this.pos_profile,
         };
@@ -370,6 +401,7 @@ export default {
     this.getCustomerGroups();
     this.getCustomerTerritorys();
     this.getGenders();
+    this.referedby();
     // set default values for customer group and territory from user defaults
     this.group = frappe.defaults.get_user_default('Customer Group');
     this.territory = frappe.defaults.get_user_default('Territory');
