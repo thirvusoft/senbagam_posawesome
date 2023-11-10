@@ -1733,7 +1733,7 @@ def serial_no_validation(company):
 
 @frappe.whitelist()
 def sales_person(user):
-    return frappe.db.exists("Sales Person",{"user":user}) or ''
+    return frappe.get_value("Sales Person",{"user":user}, "name")
     
 
 

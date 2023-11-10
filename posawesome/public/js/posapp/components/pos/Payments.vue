@@ -657,7 +657,7 @@
               </template>
             </v-autocomplete>
           </v-col>
-          <v-col cols="12">
+          <!-- <v-col cols="12">
               <v-text-field
                 dense
                 clearable
@@ -671,9 +671,9 @@
                 hide-details
                 :disabled="!painter"
               ></v-text-field>
-            </v-col>
+            </v-col> -->
            
-            <v-col cols="3">
+            <!-- <v-col cols="3">
           <v-btn
             block
             large
@@ -682,10 +682,10 @@
             @click="send_otp"
             >{{ __('Send OTP') }}</v-btn
           >
-        </v-col>
+        </v-col> -->
         
           
-        <v-col cols="3">
+        <!-- <v-col cols="3">
               <v-text-field
                 dense
                 outlined
@@ -700,8 +700,8 @@
                 hide-details
                 
               ></v-text-field>
-            </v-col>
-            <v-col cols="3">
+            </v-col> -->
+            <!-- <v-col cols="3">
           <v-btn
             block
             large
@@ -710,7 +710,7 @@
             dark
             >{{ __('Verify OTP') }}</v-btn
           >
-        </v-col>
+        </v-col> -->
         <v-col cols="3">
               <v-text-field
               clearable
@@ -840,6 +840,30 @@ export default {
   }),
 
   methods: {
+
+    ts_sales_person() {
+        const sales_persons= frappe.call({
+          method: 'posawesome.posawesome.api.posapp.sales_person',
+          args: {
+            user: frappe.session.user,
+          }
+      });
+
+      sales_persons.then(r => {
+
+        if(r.message) {
+
+          this.sales_person = r.message;
+          this.invoice_doc.sales_team = [
+            {
+              sales_person: this.sales_person,
+              allocated_percentage: 100,
+            },
+          ];
+        }
+      });
+    },
+
     send_otp(){
       const vm = this;
       frappe.call({
@@ -1040,50 +1064,31 @@ export default {
       data['redeemed_customer_credit'] = this.redeemed_customer_credit;
       data['customer_credit_dict'] = this.customer_credit_dict;
       data['is_cashback'] = this.is_cashback;
-      const sales_person= frappe.call({
-        method: 'posawesome.posawesome.api.posapp.sales_person',
-        args: {
-          user: frappe.session.user,
-          
-        },
-      });
-      sales_person.then(r => {
- 
-      if(r.message) {
-            
-            this.sales_person =r.message;
-            this.invoice_doc.sales_team = [
-          {
-            sales_person: r.message,
-            allocated_percentage: 100,
-          },
-        ];
-        }
-        const vm = this;
-        frappe.call({
-        method: 'posawesome.posawesome.api.posapp.submit_invoice',
-        args: {
-          data: data,
-          invoice: this.invoice_doc,
-        },
-        async: true,
-        callback: function (r) {
-          if (r.message) {
-            if (print) {
-              vm.load_print_page();
-            }
-            evntBus.$emit('set_last_invoice', vm.invoice_doc.name);
-            evntBus.$emit('show_mesage', {
-              text: `Invoice ${r.message.name} is Submited`,
-              color: 'success',
-            });
-            frappe.utils.play_sound('submit');
-            this.addresses = [];
+     
+      const vm = this;
+      frappe.call({
+      method: 'posawesome.posawesome.api.posapp.submit_invoice',
+      args: {
+        data: data,
+        invoice: this.invoice_doc,
+      },
+      async: true,
+      callback: function (r) {
+        if (r.message) {
+          if (print) {
+            vm.load_print_page();
           }
-        },
-      });
+          evntBus.$emit('set_last_invoice', vm.invoice_doc.name);
+          evntBus.$emit('show_mesage', {
+            text: `Invoice ${r.message.name} is Submited`,
+            color: 'success',
+          });
+          frappe.utils.play_sound('submit');
+          this.addresses = [];
+        }
+      },
+    });
     
-      });
       
       
     },
@@ -1554,6 +1559,8 @@ export default {
         this.get_addresses();
         this.get_sales_person_names();
         this.get_painter();
+        this.ts_sales_person();
+        
       });
       evntBus.$on('register_pos_profile', (data) => {
         this.pos_profile = data.pos_profile;
@@ -1648,33 +1655,7 @@ export default {
         });
       }
     },
-    sales_person() {
-      if (this.sales_person) {
-        const sales_person= frappe.call({
-        method: 'posawesome.posawesome.api.posapp.sales_person',
-        args: {
-          user: frappe.session.user,
-          
-        },
-      });
-      sales_person.then(r => {
-      if(r.message) {
-            
-            this.sales_person =r.message;
-            this.invoice_doc.sales_team = [
-          {
-            sales_person: this.sales_person,
-            allocated_percentage: 100,
-          },
-        ];
-        }
     
-      });
-      } else {
-    
-        this.invoice_doc.sales_team = [];
-      }
-    },
     painter() {
      
       if (this.painter) {
