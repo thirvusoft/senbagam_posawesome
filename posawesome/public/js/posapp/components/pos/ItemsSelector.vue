@@ -105,7 +105,6 @@
                   class="elevation-1"
                   :items-per-page="itemsPerPage"
                   hide-default-footer
-                  @click:row="add_item"
                 >
                   <template v-slot:item.rate="{ item }">
                     <span class="primary--text"

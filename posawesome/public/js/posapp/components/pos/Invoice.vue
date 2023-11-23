@@ -539,6 +539,7 @@
                       item-text="batch_no"
                       outlined
                       dense
+                      readonly
                       color="primary"
                       :label="frappe._('Batch No')"
                       @change="set_batch_qty(item, $event)"
@@ -1068,7 +1069,7 @@ export default {
         (!this.pos_profile.posa_auto_set_batch && new_item.has_batch_no) ||
         new_item.has_serial_no
       ) {
-        this.expanded.push(new_item);
+        // this.expanded.push(new_item);
       }
       return new_item;
     },

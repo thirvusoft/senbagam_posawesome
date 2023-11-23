@@ -657,7 +657,7 @@
               </template>
             </v-autocomplete>
           </v-col>
-          <!-- <v-col cols="12">
+          <v-col cols="12">
               <v-text-field
                 dense
                 clearable
@@ -671,9 +671,9 @@
                 hide-details
                 :disabled="!painter"
               ></v-text-field>
-            </v-col> -->
+            </v-col>
            
-            <!-- <v-col cols="3">
+            <v-col cols="3">
           <v-btn
             block
             large
@@ -682,10 +682,10 @@
             @click="send_otp"
             >{{ __('Send OTP') }}</v-btn
           >
-        </v-col> -->
+        </v-col>
         
           
-        <!-- <v-col cols="3">
+        <v-col cols="3">
               <v-text-field
                 dense
                 outlined
@@ -700,8 +700,8 @@
                 hide-details
                 
               ></v-text-field>
-            </v-col> -->
-            <!-- <v-col cols="3">
+            </v-col>
+            <v-col cols="3">
           <v-btn
             block
             large
@@ -710,7 +710,7 @@
             dark
             >{{ __('Verify OTP') }}</v-btn
           >
-        </v-col> -->
+        </v-col>
         <v-col cols="3">
               <v-text-field
               clearable
