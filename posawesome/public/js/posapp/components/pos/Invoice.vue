@@ -1069,7 +1069,7 @@ export default {
         (!this.pos_profile.posa_auto_set_batch && new_item.has_batch_no) ||
         new_item.has_serial_no
       ) {
-        // this.expanded.push(new_item);
+      // this.expanded.push(new_item);
       }
       return new_item;
     },
