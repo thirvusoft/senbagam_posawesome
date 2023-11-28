@@ -1750,24 +1750,38 @@ def painter_mobile_number(painter):
 
 
 @frappe.whitelist()
-def send_otp(mobile_no):
+def send_otp(invoice, painter='', mobile_no = ''):
+    if not mobile_no:
+        frappe.throw("Please enter Mobile no to send OTP")
+        
     final_otp=otpgen()
 
     if mobile_no:
         mobile_no="91"+mobile_no
         
+        otp_settings = frappe.get_single("OTP Settings")
+        if (not otp_settings.sms_gateway_url) or \
+        (not otp_settings.template_id) or\
+        (not otp_settings.authkey) or\
+        (not otp_settings.cookie):
+            frappe.throw("Please setup <b>OTP Settings</b>")
+
         import requests
 
-        url = f"""https://api.msg91.com/api/v5/otp?template_id=63b57319d6fc0504dd28d3c2&mobile={mobile_no}&authkey=387408ATKT6CcDJGRW63aa76cbP1&otp={final_otp}&VAR1=CUSTOMER"""
+        url = f"""{otp_settings.sms_gateway_url}template_id={otp_settings.template_id}&mobile={mobile_no}&authkey={otp_settings.authkey}&otp={final_otp}&VAR1=CUSTOMER"""
 
         payload = {}
         headers = {
-        'cook': 'PHPSESSID=407l8l1q6v3v69d02b8p9kej50',
-        'Cookie': 'PHPSESSID=d4cp73604c703vv5eor29jhta2'
+        'Cookie': otp_settings.cookie
         }
         response = requests.request("GET", url, headers=headers, data=payload)
         response_value=json.loads(response.text)
-        
+        si = frappe.get_doc("Sales Invoice", invoice)
+        si.painters = painter
+        si.custom_painter_otp = final_otp
+        si.custom_painter_otp_verified = 0
+        si._save_passwords()
+        si.db_update()
         return response_value,final_otp
     
    
@@ -1781,16 +1795,20 @@ def otpgen():
 		otp+=str(r.randint(1,9))
 
 	return otp
-otpgen()
-
-
-
 
 @frappe.whitelist()
-def verify_otp(enter_otp,original_otp):
-    if enter_otp==original_otp:
-        frappe.throw(_("OTP Matched"))
+def verify_otp(entered_otp, invoice):
+    if entered_otp == frappe.utils.password.get_decrypted_password('Sales Invoice', invoice, fieldname='custom_painter_otp', raise_exception = False):
+        frappe.db.set_value("Sales Invoice", invoice, "custom_painter_otp_verified", 1, update_modified=False)
         return True
     else:
-        frappe.throw(_("OTP not Matched please try again"))
+        return False
+
+@frappe.whitelist()
+def validate_otp_verified(invoice, painter):
+    if (inv_painter:=frappe.db.get_value("Sales Invoice", invoice, "painters")) and inv_painter != painter:
+        return False
+    elif frappe.db.get_value("Sales Invoice", invoice, "custom_painter_otp_verified"):
+        return True
+    else:
         return False
