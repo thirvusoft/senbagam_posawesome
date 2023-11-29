@@ -1768,7 +1768,7 @@ def send_otp(invoice, painter='', mobile_no = ''):
 
         import requests
 
-        url = f"""{otp_settings.sms_gateway_url}template_id={otp_settings.template_id}&mobile={mobile_no}&authkey={otp_settings.authkey}&otp={final_otp}&VAR1=CUSTOMER"""
+        url = f"""{otp_settings.sms_gateway_url}template_id={otp_settings.template_id}&mobile={mobile_no}&authkey={otp_settings.authkey}&otp={final_otp}"""
 
         payload = {}
         headers = {
