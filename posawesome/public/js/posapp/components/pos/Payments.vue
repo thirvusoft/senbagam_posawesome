@@ -637,8 +637,7 @@
               background-color="white"
               :no-data-text="__('Painter not found')"
               hide-details
-              
-              
+              :disabled="this.invoice_doc.custom_painter_otp_verified==1"              
             >
             
               <template v-slot:item="data">
@@ -661,7 +660,7 @@
               <v-text-field
                 dense
                 clearable
-              
+                v-show="painter && !this.invoice_doc.custom_painter_otp_verified"
                 readonly
                 outlined
                 color="primary"
@@ -677,6 +676,7 @@
           <v-btn
             block
             large
+            v-show="painter && !this.invoice_doc.custom_painter_otp_verified"
             color="primary"
             dark
             @click="send_otp"
@@ -692,7 +692,7 @@
                 color="primary"
                 :maxlength="4"
                   :counter="4"
-                 
+                v-show="painter && !this.invoice_doc.custom_painter_otp_verified"
                 clearable
                 :label="frappe._('Enter OTP')"
                 background-color="white"
@@ -705,25 +705,13 @@
           <v-btn
             block
             large
+            v-show="painter && !this.invoice_doc.custom_painter_otp_verified"
             color="primary"
             @click="verify_otp"
             dark
             >{{ __('Verify OTP') }}</v-btn
           >
         </v-col>
-        <v-col cols="3">
-              <v-text-field
-              clearable
-                dense
-                outlined
-                style="display: none;"
-                color="primary"
-                :label="frappe._('Original OTP')"
-                background-color="white"
-                v-model="original_otp"
-                hide-details
-              ></v-text-field>
-            </v-col>
         </v-row>
       </div>
     </v-card>
@@ -822,9 +810,7 @@ export default {
     painters:[],
     painter:"",
     otp_mobile_no:"",
-    enter_otp:"",
-    original_otp:"",
-  
+    enter_otp:"",  
     paid_change: 0,
     order_delivery_date: false,
     paid_change_rules: [],
@@ -868,40 +854,49 @@ export default {
       const vm = this;
       frappe.call({
         method: 'posawesome.posawesome.api.posapp.send_otp',
+        freeze: true,
         args: {
           mobile_no: this.otp_mobile_no,
-          
+          painter: this.painter,
+          invoice: this.invoice_doc.name
         },
-        
-      callback: function (r) {
-         
-       if(r.message[0]["type"]=="success"){
-       
-         vm.original_otp=r.message[1]
-            
-
+        callback: function(r) {
+          if (r.message) {
+            evntBus.$emit('show_mesage', {
+              text: frappe._("OTP sent to the mobile no"),
+              color: 'success',
+            });
+            frappe.utils.play_sound('submit');
           }
-          
-        },
+        }
       });
 
     },
     verify_otp(){
-    
-   
       frappe.call({
         method: 'posawesome.posawesome.api.posapp.verify_otp',
+        freeze: true,
         args: {
-          enter_otp: this.enter_otp,
-          original_otp:this.original_otp
-          
+          entered_otp: this.enter_otp,
+          invoice: this.invoice_doc.name
         },
         async: true,
-        callback: function (r) {
-         
-          
-          
-        },
+        callback: function(r) {
+          if (r.message) {
+            this.invoice_doc.custom_painter_otp_verified = 1
+            evntBus.$emit('show_mesage', {
+              text: frappe._("OTP Matched!"),
+              color: 'success',
+            });
+            frappe.utils.play_sound('submit');
+          } else {
+            evntBus.$emit('show_mesage', {
+              text: frappe._("OTP not Matched. Please try again."),
+              color: 'error',
+            });
+            frappe.utils.play_sound('error');
+          }
+        }.bind(this)
       });
 
 
@@ -919,6 +914,30 @@ export default {
         frappe.utils.play_sound('error');
         return;
       }
+      if (this.painter || '') {
+        let painter_otp_verified = false;
+        await frappe.call({
+          method: "posawesome.posawesome.api.posapp.validate_otp_verified",
+          async: true,
+          freeze: true,
+          args: {
+            invoice: this.invoice_doc.name,
+            painter: this.painter || ''
+          },
+          callback: function(r) {
+            painter_otp_verified = r.message || false;
+          }
+        })
+        if (!painter_otp_verified) {
+          evntBus.$emit('show_mesage', {
+            text: `Please verify painter OTP.`,
+            color: 'error',
+          });
+          frappe.utils.play_sound('error');
+          return;
+        }
+      }
+      
      //await 
       // validate phone payment
       let phone_payment_is_valid = true;
@@ -1035,19 +1054,16 @@ export default {
         return;
       }
      
-
-      this.submit_invoice(print);
+      this.invoice_doc.painters=this.painter;
+      await this.submit_invoice(print);
       this.customer_credit_dict = [];
       this.redeem_customer_credit = false;
-      this.is_cashback = true;
-      
-      // this.sales_person = '';
-      this.painters=this.painter;
+      this.is_cashback = true;      
 
       evntBus.$emit('new_invoice', 'false');
       this.back_to_invoice();
     },
-    submit_invoice(print) {
+    async submit_invoice(print) {
      
       this.invoice_doc.payments.forEach((payment) => {
         payment.amount = flt(payment.amount);
@@ -1066,8 +1082,9 @@ export default {
       data['is_cashback'] = this.is_cashback;
      
       const vm = this;
-      frappe.call({
+      await frappe.call({
       method: 'posawesome.posawesome.api.posapp.submit_invoice',
+      freeze: true,
       args: {
         data: data,
         invoice: this.invoice_doc,
@@ -1544,6 +1561,7 @@ export default {
     this.$nextTick(function () {
       evntBus.$on('send_invoice_doc_payment', (invoice_doc) => {
         this.invoice_doc = invoice_doc;
+        this.painter = this.invoice_doc.painters;
         const default_payment = this.invoice_doc.payments.find(
           (payment) => payment.default == 1
         );
@@ -1660,30 +1678,23 @@ export default {
      
       if (this.painter) {
         this.invoice_doc.painters=this.painter;
-      
         const painter_validation = frappe.call({
-			method: 'posawesome.posawesome.api.posapp.painter_mobile_number',
-			args: {
-				painter:this.painter
-			},
-		});
-    painter_validation.then(r => {
-   
-      if(r.message){
-
-        
-          this.otp_mobile_no=r.message
-             
-            }
-      else{
+          method: 'posawesome.posawesome.api.posapp.painter_mobile_number',
+          args: {
+            painter:this.painter
+          },
+        });
+        painter_validation.then(r => {
+          if(r.message){
+            this.otp_mobile_no=r.message
+          } else{
+            this.otp_mobile_no=""
+          }
+        })  
+      } else {
         this.otp_mobile_no=""
       }
-    })
-     
-      
-       
-      } 
     },
-  },
+  }
 };
 </script>
