@@ -66,7 +66,7 @@
                 cols="6"
                 min-height="50"
               >
-                <v-card hover="hover" @click="add_item(item)">
+                <v-card hover="hover">
                   <v-img
                     :src="
                       item.image ||
@@ -105,7 +105,6 @@
                   class="elevation-1"
                   :items-per-page="itemsPerPage"
                   hide-default-footer
-                  @click:row="add_item"
                 >
                   <template v-slot:item.rate="{ item }">
                     <span class="primary--text"
