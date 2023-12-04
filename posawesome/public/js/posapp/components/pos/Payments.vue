@@ -1273,7 +1273,6 @@ export default {
         callback: function (r) {
           if (r.message) {
             vm.painters = r.message;
-            vm.painter = ''
             if (vm.pos_profile.posa_local_storage) {
               localStorage.setItem('painters_storage', '');
               localStorage.setItem(
