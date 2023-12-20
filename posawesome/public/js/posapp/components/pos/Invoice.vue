@@ -879,7 +879,7 @@ export default {
         { text: __('Rate'), value: 'rate', align: 'center' },
         { text: __('Amount'), value: 'amount', align: 'center' },
         // { text: __('is Offer'), value: 'posa_is_offer', align: 'center' },
-        { text: __('is Seald'), value: 'is_seald', align: 'center' },
+        { text: __('Is Sealed'), value: 'is_seald', align: 'center' },
       ],
     };
   },
